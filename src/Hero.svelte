@@ -1,10 +1,9 @@
 <script>
   import { onMount, flushSync } from 'svelte';
   import c from './content.json';
-  import Icon from './lib/Icon.svelte';
   import { hash } from './lib/code.js';
   import { gsap, scene, reduce } from './lib/motion.js';
-  import Metrics from './lib/Metrics.svelte';
+  import Intro from './Intro.svelte';
   import { ui } from './lib/ui.svelte.js';
 
   const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -50,13 +49,6 @@
     c.achievements.papers.length + c.achievements.certifications.length + c.blogs.length + c.talks.length;
   const headHash = hash(c.name + c.since);
 
-  const words = c.name.split(' ');
-  const socials = [
-    ['GitHub', c.socials.github],
-    ['LinkedIn', c.socials.linkedin],
-    ['Medium', c.socials.medium],
-    ['Twitter', c.socials.twitter],
-  ];
 
   let root, stage, graph, con, head, refEl, out;
   let view = $state({ w: 0, h: 0, vert: false, paths: [], dots: [], mdots: [], labels: [], tag: null, lx: 0 });
@@ -326,29 +318,7 @@
     </div>
 
     <div class="out" bind:this={out}>
-      <div class="out-inner">
-        <div class="intro">
-        <img class="avatar" src="/avatar.webp" alt="Portrait of {c.name}" width="88" height="88" />
-        <h1 class="name" aria-label={c.name}>
-          {#each words as w}
-            <span class="line" aria-hidden="true">{#each w as ch}<span class="ch">{ch}</span>{/each}</span>
-          {/each}
-        </h1>
-        <p class="badge rise">{c.badge}</p>
-        <p class="tagline rise">{c.tagline}</p>
-        <div class="actions rise">
-          <a class="btn primary" href="mailto:{c.socials.email}"><Icon name="mail" /> Say hello</a>
-          <a class="btn" href={c.resume} target="_blank" rel="noopener"><Icon name="doc" /> Résumé</a>
-        </div>
-        <ul class="socials rise">
-          {#each socials as [label, href]}
-            <li><a {href} target="_blank" rel="noopener">{label}<Icon name="arrow" size={14} /></a></li>
-          {/each}
-        </ul>
-        <p class="stack rise"><span>stack</span> {c.stack.join(' · ')}</p>
-        </div>
-        <div class="side rise"><Metrics show={reduce || ui.stage === 'run'} /></div>
-      </div>
+      <Intro />
     </div>
   </div>
 </section>
@@ -484,82 +454,11 @@
     align-items: center;
     padding: 80px 16px 40px;
   }
-  .out-inner {
-    width: min(100%, 1120px);
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr minmax(300px, 380px);
-    gap: 56px;
-    align-items: center;
-  }
-  .badge {
-    display: inline-block;
-    margin: 24px 0 0;
-    padding: 4px 10px;
-    border: 1px solid color-mix(in oklab, var(--syn-type) 40%, transparent);
-    border-radius: 999px;
-    font: 500 0.75rem/1.4 var(--mono);
-    color: var(--syn-type);
-  }
-  @media (max-width: 1000px) {
-    .out-inner { display: block; }
-    .side { display: none; }
-  }
-  .avatar { width: 88px; height: 88px; border-radius: 50%; display: block; margin-bottom: 28px; }
-  .name {
-    margin: 0;
-    font: 600 clamp(3rem, 10.5vw, 6rem)/0.98 var(--sans);
-    letter-spacing: -0.04em;
-    text-wrap: balance;
-  }
-  .line { display: inline-block; overflow: clip; padding-bottom: 0.06em; margin-right: 0.22em; vertical-align: top; }
-  .ch { display: inline-block; }
-  .tagline {
-    margin: 16px 0 0;
-    max-width: 34ch;
-    font: 400 clamp(1.125rem, 1rem + 0.7vw, 1.5rem)/1.45 var(--sans);
-    color: var(--muted);
-    text-wrap: pretty;
-  }
-  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 36px; }
-  .socials {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 22px;
-    list-style: none;
-    padding: 0;
-    margin: 28px 0 0;
-  }
-  .socials a {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--text);
-    text-decoration: none;
-    font: 500 0.9375rem/2 var(--sans);
-  }
-  .socials a :global(svg) { color: var(--faint); transition: color 0.2s, transform 0.2s; }
-  .socials a:hover :global(svg) { color: var(--accent); transform: translate(1px, -1px); }
-  .stack { margin: 40px 0 0; font: 400 0.75rem/1.7 var(--mono); color: var(--muted); }
-  .stack span { color: var(--syn-kw); margin-right: 8px; }
-
-  @media (max-width: 640px) and (max-height: 760px) {
-    .avatar { width: 56px; height: 56px; margin-bottom: 16px; }
-    .name { font-size: clamp(2.5rem, 13vw, 3rem); }
-    .badge { margin-top: 16px; }
-    .tagline { margin-top: 12px; font-size: 1.0625rem; }
-    .actions { margin-top: 22px; }
-    .socials { margin-top: 14px; gap: 2px 18px; }
-    .stack { margin-top: 14px; }
-  }
-
   :global(.rm) .stage { height: auto; padding-top: 16px; }
   :global(.rm) .graph, :global(.rm) .con, :global(.rm) .head, :global(.rm) .ref { display: none; }
   :global(.rm) .out { position: static; padding: 72px 16px 24px; }
 
   @media (max-width: 640px) {
-    .avatar { width: 72px; height: 72px; margin-bottom: 22px; }
-    .stack { margin-top: 28px; }
     .out { padding: 64px 16px 16px; }
     .lb.mid .lt { font-size: 0.6875rem; }
     .con { bottom: 14px; height: 36px; font-size: 0.6875rem; }
