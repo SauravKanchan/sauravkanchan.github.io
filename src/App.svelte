@@ -41,9 +41,30 @@
       t = setTimeout(rebuildAll, 200);
     };
     addEventListener('resize', onResize);
+
+    // Web fonts and live stats arrive after first layout and change section heights, which leaves
+    // every trigger and pin below them stale. Re-measure whenever a section's own size settles on a
+    // new value (pin spacers don't change section sizes, so this can't feed back on itself).
+    const sections = [...document.querySelectorAll('main > section, main > .pin-spacer > section')];
+    const sig = () => sections.map((el) => el.offsetHeight).join();
+    let last = sig();
+    let rt;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(rt);
+      rt = setTimeout(() => {
+        const now = sig();
+        if (now === last) return;
+        last = now;
+        rebuildAll();
+      }, 150);
+    });
+    sections.forEach((el) => ro.observe(el));
+    // next frame: this hook can run inside a section's flushSync, before that section has finished building
+    requestAnimationFrame(rebuildAll);
     document.fonts.ready.then(rebuildAll);
 
     return () => {
+      ro.disconnect();
       removeEventListener('resize', onResize);
       gsap.ticker.remove(raf);
       lenis.destroy();

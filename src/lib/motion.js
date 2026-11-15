@@ -12,10 +12,13 @@ export { gsap, ScrollTrigger };
 // and all of them are rebuilt from a clean layout when the width changes.
 const scenes = [];
 
+// Register before building: a build may flushSync(), which can mount later sections first.
+// App calls rebuildAll() on the next frame, so triggers end up created in document order.
 export function scene(build) {
   if (reduce) return () => {};
-  const s = { build, ctx: gsap.context(build) };
+  const s = { build, ctx: null };
   scenes.push(s);
+  s.ctx = gsap.context(build);
   return () => {
     s.ctx.revert();
     scenes.splice(scenes.indexOf(s), 1);
