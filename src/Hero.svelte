@@ -158,8 +158,9 @@ export default saurav.run();`;
         from = { x: r.left - sr.left + r.width / 2, y: r.top - sr.top + r.height / 2 };
       }
       gsap.set(el, { xPercent: -50, yPercent: -50, x: from.x, y: from.y, opacity: 0 });
-      const at = 1 + i * 0.07;
-      tl.to(el, { opacity: 1, duration: tok ? 0.15 : 0.6 }, tok ? at : 2);
+      const narrow = W < 640;
+      const at = 1 + i * (narrow ? 0.12 : 0.07);
+      tl.to(el, { opacity: 1, duration: tok ? (narrow ? 0.4 : 0.15) : 0.6 }, tok ? at + (narrow ? 0.8 : 0) : 2);
       tl.fromTo(
         el,
         { '--box': 0 },
@@ -175,17 +176,22 @@ export default saurav.run();`;
     tl.to(nodeEls, { x: W / 2, y: H / 2, scale: 0.3, opacity: 0, duration: 1, ease: 'power3.in', stagger: 0.025 }, 3.8);
     tl.to(ast.querySelector('svg'), { opacity: 0, duration: 0.6 }, 3.8);
     tl.fromTo(chip, { autoAlpha: 0, scale: 0.6 }, { autoAlpha: 1, scale: 1, duration: 0.6, ease: 'power3.out' }, 4.6);
-    tl.to(chip, { autoAlpha: 0, y: H / 2 - 60, duration: 0.5 }, 5.3);
+    tl.to(chip, { autoAlpha: 0, y: H / 2 - 60, duration: 0.4 }, 5.3);
 
-    tl.fromTo(logEl, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power3.out' }, 5.3);
+    tl.fromTo(logEl, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power3.out' }, 5.7);
     tl.fromTo(
       logEl.querySelectorAll('.ll'),
       { opacity: 0, x: -10 },
-      { opacity: 1, x: 0, duration: 0.25, stagger: 0.22, ease: 'none' },
-      5.6,
+      { opacity: 1, x: 0, duration: 0.25, stagger: 0.2, ease: 'none' },
+      5.9,
     );
-    tl.fromTo(logEl.querySelector('.bar i'), { scaleX: 0 }, { scaleX: 1, duration: 2.2, ease: 'none' }, 5.6);
+    tl.fromTo(logEl.querySelector('.bar i'), { scaleX: 0 }, { scaleX: 1, duration: 2.1, ease: 'none' }, 5.9);
     tl.to(logEl, { autoAlpha: 0, y: -40, filter: 'blur(8px)', duration: 0.8 }, 8.2);
+
+    // pinned at 100svh with overflow hidden: shrink the intro on short phones rather than clip it
+    const inner = out.querySelector('.out-inner');
+    const room = H - 96;
+    gsap.set(inner, { scale: Math.min(1, room / inner.offsetHeight), transformOrigin: '0% 50%' });
 
     tl.set(out, { autoAlpha: 1 }, 8.5);
     tl.fromTo(out.querySelector('.avatar'), { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out' }, 8.5);
@@ -449,6 +455,16 @@ export default saurav.run();`;
   .stack { margin: 40px 0 0; font: 400 0.75rem/1.7 var(--mono); color: var(--muted); }
   .stack span { color: var(--syn-kw); margin-right: 8px; }
 
+  @media (max-width: 640px) and (max-height: 760px) {
+    .avatar { width: 56px; height: 56px; margin-bottom: 16px; }
+    .name { font-size: clamp(2.5rem, 13vw, 3rem); }
+    .badge { margin-top: 16px; }
+    .tagline { margin-top: 12px; font-size: 1.0625rem; }
+    .actions { margin-top: 22px; }
+    .socials { margin-top: 14px; gap: 2px 18px; }
+    .stack { margin-top: 14px; }
+  }
+
   :global(.rm) .stage { height: auto; display: block; padding-top: 88px; }
   :global(.rm) .editor { margin: 0 auto; }
   :global(.rm) .ast, :global(.rm) .log { display: none; }
@@ -458,6 +474,9 @@ export default saurav.run();`;
     .stage { padding: 64px 12px 16px; }
     .pane { padding: 14px 12px 14px 2px; }
     .avatar { width: 72px; height: 72px; margin-bottom: 22px; }
+    .ll { white-space: normal; padding-left: 2ch; text-indent: -2ch; line-height: 1.6; margin-bottom: 4px; }
+    .ll.dim { padding-left: 2ch; text-indent: 0; }
     .stack { margin-top: 28px; }
+    .out { padding: 64px 16px 16px; }
   }
 </style>

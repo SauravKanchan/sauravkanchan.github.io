@@ -74,7 +74,7 @@
   .dot.on { color: var(--syn-str); }
   .dot.on::before { animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.3; } }
-  dl { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px 18px; }
+  dl { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
   dt { color: var(--muted); font-size: 0.6875rem; }
   dd {
     margin: 2px 0 0;

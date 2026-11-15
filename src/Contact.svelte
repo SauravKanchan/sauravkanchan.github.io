@@ -6,13 +6,13 @@
   import { ui } from './lib/ui.svelte.js';
 
   const s = c.socials;
-  const strip = (u) => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+  const handle = (u) => u.replace(/\/$/, '').split('/').at(-1);
   const links = [
     ['email', s.email, `mailto:${s.email}`],
-    ['github', strip(s.github), s.github],
-    ['linkedin', strip(s.linkedin), s.linkedin],
-    ['medium', strip(s.medium), s.medium],
-    ['twitter', strip(s.twitter), s.twitter],
+    ['github', handle(s.github), s.github],
+    ['linkedin', handle(s.linkedin), s.linkedin],
+    ['medium', handle(s.medium), s.medium],
+    ['twitter', '@' + handle(s.twitter), s.twitter],
     ['resume', 'Résumé, Google Drive', c.resume],
   ];
   const cmd = 'contact saurav';
@@ -23,9 +23,6 @@
   function build() {
     const typed = section.querySelector('.typed');
     const cursor = section.querySelector('.prompt .cursor');
-    const { width: w, height: h } = panel.getBoundingClientRect();
-    const cw = cursor.offsetWidth;
-    const chh = cursor.offsetHeight;
     // short screens can't hold the whole panel while pinned, so play it as the section scrolls past instead
     const fits = section.querySelector('.wrap').offsetHeight + 120 < innerHeight;
     gsap
@@ -43,8 +40,8 @@
       .to(cursor, { autoAlpha: 0, duration: 0.01 }, 1.3)
       .fromTo(
         panel,
-        { clipPath: `inset(0px ${w - cw}px ${h - chh}px 0px round 2px)`, backgroundColor: '#e9a866' },
-        { clipPath: 'inset(0px 0px 0px 0px round 18px)', backgroundColor: '#201b16', duration: 1, ease: 'power3.inOut' },
+        { clipPath: 'inset(0% 0% 100% 0% round 18px)' },
+        { clipPath: 'inset(0% 0% 0% 0% round 18px)', duration: 1, ease: 'power3.inOut' },
         1.3,
       )
       .fromTo(

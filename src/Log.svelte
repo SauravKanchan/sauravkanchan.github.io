@@ -169,7 +169,7 @@
   .row { padding: 0 0 clamp(36px, 6vh, 64px) 64px; }
   .row.minor { padding-bottom: 28px; }
   .head { font: 400 0.8125rem/22px var(--mono); color: var(--text); }
-  .head-text { display: inline; }
+  .head-text { display: block; }
   .hash { color: var(--syn-kw); margin-right: 10px; }
   .ref {
     color: var(--syn-key);

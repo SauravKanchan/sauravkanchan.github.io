@@ -80,7 +80,8 @@ ${certifications.map((x) => `  ${q(x)},`).join('\n')}
     width: min(calc(100% - 32px), 960px);
     margin: 0 auto;
   }
-  .layer { grid-area: 1 / 1; align-self: start; }
+  /* both layers stretch to the taller one so the clip percentages and the scanline share one height */
+  .layer { grid-area: 1 / 1; align-self: stretch; }
   .src {
     --code-size: clamp(0.6875rem, 0.6rem + 0.4vw, 0.875rem);
     clip-path: inset(calc(var(--p) * 1%) 0 0 0);
