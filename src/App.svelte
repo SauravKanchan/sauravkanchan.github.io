@@ -12,10 +12,6 @@
   import { ui, STAGES } from './lib/ui.svelte.js';
   import { loadStats } from './lib/stats.svelte.js';
 
-  // ponytail: preview switch for hero variants (?hero=<file name>), drop once one is chosen
-  const variants = import.meta.glob('./heroes/*.svelte', { eager: true, import: 'default' });
-  const pick = new URLSearchParams(location.search).get('hero');
-  const HeroView = variants[`./heroes/${pick}.svelte`] ?? Hero;
 
   let bar;
 
@@ -88,7 +84,7 @@
 </header>
 
 <main id="top">
-  <HeroView />
+  <Hero />
   <Log />
   <Hackathons />
   <Packages />

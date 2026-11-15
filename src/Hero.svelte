@@ -1,72 +1,54 @@
 <script>
   import { onMount, flushSync } from 'svelte';
   import c from './content.json';
-  import Code from './lib/Code.svelte';
   import Icon from './lib/Icon.svelte';
-  import { lines } from './lib/code.js';
+  import { hash } from './lib/code.js';
   import { gsap, scene, reduce } from './lib/motion.js';
   import Metrics from './lib/Metrics.svelte';
   import { ui } from './lib/ui.svelte.js';
 
-  const a = c.achievements;
-  const hacks = c.hackathons.recent.length + c.hackathons.early.length;
-  const q = (s) => `"${s}"`;
-  const src = `import { Engineer } from "@runtime/people";
+  const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const [bs, arcana, blocklogy, mahindra] = c.experience;
+  const pkgs = c.projects.filter((p) => p.npm || p.mine);
+  const { early, recent } = c.hackathons;
 
-// one human, statically typed
-const saurav = new Engineer({
-  name: ${q(c.name)},
-  role: ${q(c.role)},
-  at: ${q(c.company)},
-  stack: [${c.stack.map(q).join(', ')}],
-  experience: [
-${c.experience.map((e) => `    { role: ${q(e.role)}, at: ${q(e.company)} },`).join('\n')}
-  ],
-  achievements: { hackathons: ${hacks}, papers: ${a.papers.length}, oss: ${c.projects.filter((p) => p.npm || p.mine).length} },
-  contact: ${q(c.socials.email)},
-});
+  // off: lane offset from main when lanes run horizontally; col: column when they run vertically
+  const B = {
+    main: { name: 'main', color: 'var(--accent)', off: 0, col: 0 },
+    [slug(mahindra.company)]: { color: 'var(--syn-key)', off: -1, col: 1 },
+    [slug(blocklogy.company)]: { color: 'var(--syn-type)', off: 1, col: 2 },
+    packages: { color: 'var(--syn-fn)', off: -2, col: 3 },
+    [slug(arcana.company)]: { color: 'var(--syn-str)', off: 2, col: 4 },
+    hackathons: { color: 'var(--syn-num)', off: -3, col: 5 },
+    [slug(bs.company)]: { color: 'color-mix(in oklab, var(--syn-type) 55%, var(--syn-num))', off: 3, col: 6 },
+  };
+  for (const k in B) B[k].name ??= k;
 
-export default saurav.run();`;
+  // chronological; t is the slot along the time axis
+  const commits = [
+    ['main', c.education.degree],
+    ['hackathons', early[0].event],
+    ['hackathons', early[1].event],
+    [slug(mahindra.company), mahindra.role],
+    [slug(blocklogy.company), blocklogy.role],
+    [slug(arcana.company), arcana.role],
+    ['packages', pkgs[0].name],
+    ['packages', pkgs[1].name],
+    ...[...recent].reverse().map((h) => ['hackathons', h.event]),
+    [slug(bs.company), bs.role],
+  ].map(([b, msg], t) => ({ b, msg, t, hash: hash(b + msg) }));
 
-  const PROPS = ['name', 'role', 'stack', 'experience', 'achievements', 'contact'];
-  const code = lines(src);
-  const seen = new Set();
-  for (const l of code) {
-    const hasNew = l.tokens.some((t) => t.text === 'new');
-    for (const t of l.tokens) {
-      let id = null;
-      if (t.c === 'key' && l.indent === 2 && PROPS.includes(t.text)) id = t.text;
-      else if (t.c === 'id' && t.text === 'saurav') id = 'decl';
-      else if (hasNew && t.text === 'Engineer') id = 'new';
-      if (id && !seen.has(id)) {
-        seen.add(id);
-        t.ast = id;
-      }
-    }
-  }
+  const merges = [slug(mahindra.company), slug(blocklogy.company), 'packages', slug(arcana.company), 'hackathons', slug(bs.company)].map(
+    (b, i) => ({ b, t: commits.length + i, hash: hash('merge ' + b) }),
+  );
+  const LAST = merges.at(-1).t;
+  const branches = Object.keys(B).filter((k) => k !== 'main');
+  const tips = new Set(branches.map((b) => commits.findLast((x) => x.b === b)));
 
-  const nodes = [
-    { id: 'prog', kind: 'Program', text: 'saurav.ts' },
-    { id: 'decl', kind: 'VariableDeclaration', text: 'saurav' },
-    { id: 'new', kind: 'NewExpression', text: 'Engineer' },
-    { id: 'obj', kind: 'ObjectExpression', text: `{ ${PROPS.length} props }` },
-    ...PROPS.map((p) => ({ id: p, kind: 'Property', text: p })),
-  ];
-  const edges = [['prog', 'decl'], ['decl', 'new'], ['new', 'obj'], ...PROPS.map((p) => ['obj', p])];
-
-  const log = [
-    ['cmd', '$ runtime build saurav.ts --target=human'],
-    ['dim', `parsed saurav.ts into ${nodes.length} AST nodes`],
-    ['ok', `resolved ${c.stack.length} dependencies`],
-    ['ok', `linked ${c.experience.length} roles`],
-    ['ok', `merged ${hacks} hackathon branches`],
-    ['ok', `published ${c.projects.length} packages`],
-    ['ok', `indexed ${a.papers.length} papers, ${a.certifications.length} certifications`],
-    ['ok', `bundled ${c.blogs.length} posts and ${c.talks.length} talks`],
-    ['ok', 'tree-shaken: 0 kB of filler'],
-    ['ok', 'fetching live stats from api.github.com, api.npmjs.org'],
-    ['done', `built saurav.js · serving on main since ${c.since}`],
-  ];
+  const files =
+    c.experience.length + c.projects.length + early.length + recent.length +
+    c.achievements.papers.length + c.achievements.certifications.length + c.blogs.length + c.talks.length;
+  const headHash = hash(c.name + c.since);
 
   const words = c.name.split(' ');
   const socials = [
@@ -76,133 +58,205 @@ export default saurav.run();`;
     ['Twitter', c.socials.twitter],
   ];
 
-  let root, stage, editor, ast, logEl, out;
-  let view = $state({ w: 0, h: 0, paths: [] });
+  let root, stage, graph, con, head, refEl, out;
+  let view = $state({ w: 0, h: 0, vert: false, paths: [], dots: [], mdots: [], labels: [], tag: null, lx: 0 });
 
   function layout(W, H) {
-    const narrow = W < 640;
-    const top = 64;
-    const h = H - top - 32;
-    const y = (f) => top + h * f;
-    const P = {
-      prog: { x: W / 2, y: y(0.08) },
-      decl: { x: W / 2, y: y(0.27) },
-      new: { x: W / 2, y: y(0.45) },
-      obj: { x: W / 2, y: y(0.62) },
-    };
-    const cols = narrow ? 3 : 6;
-    const span = Math.min(W - 24, 1000);
-    PROPS.forEach((p, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      P[p] = { x: W / 2 - span / 2 + (span * (col + 0.5)) / cols, y: y(narrow ? 0.8 + row * 0.15 : 0.84) };
-    });
-    return P;
+    const vert = W < 900 || W / H < 1.15;
+    if (!vert) {
+      const top = 112, bottom = 96;
+      const x0 = 84, s = (W - x0 - 64) / LAST;
+      const yc = (top + H - bottom) / 2;
+      const ls = Math.min(92, (H - top - bottom) / 6);
+      return { vert, s, at: (t, b) => ({ x: x0 + t * s, y: yc + B[b].off * ls }) };
+    }
+    const small = W < 500;
+    const top = small ? 92 : 120, bottom = small ? 70 : 100;
+    const ls = small ? 17 : 26;
+    const gw = 6 * ls;
+    const lw = Math.min(300, W - 32 - gw - 22);
+    const gx0 = (W - (gw + 22 + lw)) / 2;
+    const s = (H - top - bottom) / LAST;
+    return { vert, lx: gx0 + gw + 22, at: (t, b) => ({ x: gx0 + B[b].col * ls, y: top + t * s }) };
+  }
+
+  function curve(A, Z, vert) {
+    if (vert) {
+      const m = (A.y + Z.y) / 2;
+      return `C${A.x} ${m} ${Z.x} ${m} ${Z.x} ${Z.y}`;
+    }
+    const m = (A.x + Z.x) / 2;
+    return `C${m} ${A.y} ${m} ${Z.y} ${Z.x} ${Z.y}`;
   }
 
   function build() {
     const sr = stage.getBoundingClientRect();
     const W = sr.width;
     const H = sr.height;
-    const P = layout(W, H);
+    const { vert, at, lx, s } = layout(W, H);
+    const pt = (p) => `${p.x} ${p.y}`;
+
+    const paths = [{ b: 'main', kind: 'main', d: `M${pt(at(0, 'main'))}L${pt(at(LAST, 'main'))}` }];
+    for (const b of branches) {
+      const own = commits.filter((x) => x.b === b);
+      const f = own[0].t - 0.9;
+      const l = own.at(-1).t;
+      const m = merges.find((x) => x.b === b).t;
+      const F = at(f, 'main'), F2 = at(f + 0.8, b), Lp = at(l, b), M1 = at(m - 0.8, b), M = at(m, 'main');
+      paths.push({ b, kind: 'branch', d: `M${pt(F)}${curve(F, F2, vert)}L${pt(Lp)}` });
+      paths.push({ b, kind: 'merge', d: `M${pt(Lp)}L${pt(M1)}${curve(M1, M, vert)}` });
+    }
+
+    // horizontal: alternate labels above/below so neighbours on one lane never collide
+    const lastSide = {};
+    const labels = commits.map((x) => {
+      const p = at(x.t, x.b);
+      let side = 'mid';
+      if (!vert) {
+        side = x.b === 'main' ? 'below' : lastSide[x.b] === 'above' ? 'below' : 'above';
+        lastSide[x.b] = side;
+      }
+      return { ...x, x: vert ? lx : p.x, y: p.y, side, tip: tips.has(x) };
+    });
+    // wrap a label only when the next one on the same lane and side would run into it
+    for (const l of labels) {
+      const next = labels.find((n) => n.t > l.t && n.b === l.b && n.side === l.side);
+      l.max = !vert && next ? (next.t - l.t) * s - 14 : null;
+    }
+    if (vert) for (const m of merges) labels.push({ ...m, merge: true, x: lx, y: at(m.t, 'main').y, side: 'mid' });
+
     view = {
       w: W,
       h: H,
-      paths: edges.map(([f, t]) => {
-        const A = P[f];
-        const B = P[t];
-        const y1 = A.y + 14;
-        const y2 = B.y - 14;
-        const m = (y1 + y2) / 2;
-        return `M${A.x} ${y1}C${A.x} ${m} ${B.x} ${m} ${B.x} ${y2}`;
-      }),
+      vert,
+      lx,
+      tag: at(0, 'main'),
+      paths,
+      labels,
+      dots: commits.map((x) => ({ ...x, ...at(x.t, x.b) })),
+      mdots: merges.map((x) => ({ ...x, ...at(x.t, 'main') })),
     };
 
     flushSync();
-    const nodeEls = [...ast.querySelectorAll('.node')];
-    const paths = ast.querySelectorAll('path');
-    const kinds = ast.querySelectorAll('.kind');
-    const chip = ast.querySelector('.chip');
-    const tokens = editor.querySelectorAll('[data-ast]');
+    const q = (s) => [...graph.querySelectorAll(s)];
+    const pathEl = (b, kind) => graph.querySelector(`path.ink[data-b="${b}"][data-kind="${kind}"]`);
+    const dotEls = q('.dot');
+    const mdotEls = q('.mdot');
+    const rings = q('.ring');
+    const labelEls = q('.lb');
+    const textEls = q('.lt');
+    const cx = W / 2;
+    const cy = H / 2;
 
     const tl = gsap.timeline({
       defaults: { ease: 'power2.inOut', duration: 1 },
       scrollTrigger: {
         trigger: root,
         start: 'top top',
-        end: () => '+=' + innerHeight * 4.5,
+        end: () => '+=' + innerHeight * 4.6,
         pin: true,
         scrub: 0.6,
         onUpdate: (s) => {
           const p = s.progress;
-          ui.stage = p < 0.08 ? 'source' : p < 0.42 ? 'parse' : p < 0.77 ? 'build' : 'run';
+          ui.stage = p < 0.03 ? 'source' : p < 0.25 ? 'parse' : p < 0.74 ? 'build' : 'run';
         },
       },
     });
 
-    gsap.set(ast, { autoAlpha: 1 });
-    gsap.set([logEl, out], { autoAlpha: 0 });
-    gsap.set(paths, { strokeDasharray: 1, strokeDashoffset: 1 });
-    gsap.set(kinds, { opacity: 0 });
-    gsap.set(chip, { xPercent: -50, yPercent: -50, x: W / 2, y: H / 2, autoAlpha: 0 });
+    gsap.set([graph, con], { autoAlpha: 1 });
+    gsap.set([out, refEl], { autoAlpha: 0 });
+    gsap.set(q('path.ink'), { strokeDasharray: '1 2', strokeDashoffset: 1 });
+    gsap.set([...dotEls, ...mdotEls], { scale: 0, transformOrigin: '50% 50%' });
+    gsap.set(textEls, { opacity: 0 });
+    gsap.set(rings, { opacity: 0 });
 
-    tl.to(editor.querySelectorAll('.t:not([data-ast])'), { opacity: 0.22, duration: 0.8 }, 0.1);
-    tl.to(tokens, { backgroundColor: 'rgba(233, 168, 102, 0.18)', color: '#f4c28c', duration: 0.8 }, 0.1);
+    // 1 · the graph draws itself, commit by commit
+    const T = (t) => 0.15 + t * 0.2;
+    const main = pathEl('main', 'main');
+    tl.to(main, { strokeDashoffset: 1 - (commits.length - 0.5) / LAST, autoRound: false, ease: 'none', duration: T(commits.length - 0.5) - 0.1 }, 0.1);
+    for (const b of branches) {
+      const own = commits.filter((x) => x.b === b);
+      const t0 = T(own[0].t - 0.9);
+      tl.to(pathEl(b, 'branch'), { strokeDashoffset: 0, autoRound: false, ease: 'none', duration: Math.max(0.2, T(own.at(-1).t) - t0) }, t0);
+    }
+    commits.forEach((x, i) => {
+      tl.to(dotEls[i], { scale: 1, duration: 0.25, ease: 'back.out(3)' }, T(x.t));
+      tl.fromTo(textEls[i], { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.3, ease: 'power2.out' }, T(x.t) + 0.05);
+    });
+    const conLines = [...con.querySelectorAll('.cl')];
+    gsap.set(conLines.slice(1), { autoAlpha: 0, y: 10 });
 
-    nodeEls.forEach((el, i) => {
-      const to = P[el.dataset.id];
-      const tok = editor.querySelector(`[data-ast="${el.dataset.id}"]`);
-      let from = to;
-      if (tok) {
-        const r = tok.getBoundingClientRect();
-        from = { x: r.left - sr.left + r.width / 2, y: r.top - sr.top + r.height / 2 };
-      }
-      gsap.set(el, { xPercent: -50, yPercent: -50, x: from.x, y: from.y, opacity: 0 });
-      const narrow = W < 640;
-      const at = 1 + i * (narrow ? 0.12 : 0.07);
-      tl.to(el, { opacity: 1, duration: tok ? (narrow ? 0.4 : 0.15) : 0.6 }, tok ? at + (narrow ? 0.8 : 0) : 2);
-      tl.fromTo(
-        el,
-        { '--box': 0 },
-        { x: to.x, y: to.y, '--box': 1, duration: 1.3, ease: 'power3.inOut' },
-        at,
-      );
+    // 2 · git merge, one branch at a time
+    const M0 = 2.75;
+    const step = 0.5;
+    merges.forEach((m, i) => {
+      const at0 = M0 + i * step;
+      const hit = at0 + 0.32;
+      tl.to(conLines[i], { autoAlpha: 0, y: -10, duration: 0.2 }, at0);
+      tl.to(conLines[i + 1], { autoAlpha: 1, y: 0, duration: 0.2 }, at0 + 0.1);
+      tl.to(pathEl(m.b, 'merge'), { strokeDashoffset: 0, autoRound: false, ease: 'power1.in', duration: 0.32 }, at0);
+      tl.to(main, { strokeDashoffset: 1 - m.t / LAST, autoRound: false, ease: 'none', duration: 0.32 }, at0);
+      tl.to(mdotEls[i], { scale: 1, duration: 0.2, ease: 'back.out(3)' }, hit);
+      tl.fromTo(rings[i], { opacity: 0.9, attr: { r: 5 } }, { opacity: 0, attr: { r: vert ? 18 : 26 }, duration: 0.4, ease: 'power2.out', immediateRender: false }, hit);
+      if (vert) tl.fromTo(textEls[commits.length + i], { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.25, ease: 'power2.out' }, hit);
+      tl.to(q(`[data-b="${m.b}"]:not(.lb)`).concat(labelEls.filter((el) => el.dataset.b === m.b && !el.classList.contains('merge'))), { opacity: 0.55, duration: 0.3 }, hit + 0.1);
     });
 
-    tl.to(editor, { autoAlpha: 0, filter: 'blur(8px)', scale: 0.97, duration: 1.1 }, 1.5);
-    tl.to(paths, { strokeDashoffset: 0, autoRound: false, duration: 0.8, stagger: 0.05 }, 2.2);
-    tl.to(kinds, { opacity: 1, duration: 0.5, stagger: 0.03 }, 2.4);
+    // 3 · everything collapses into HEAD
+    const C0 = M0 + merges.length * step + 0.35;
+    tl.to(conLines.at(-1), { autoAlpha: 0, y: -10, duration: 0.3 }, C0);
+    tl.to(con, { autoAlpha: 0, duration: 0.3 }, C0 + 0.2);
+    tl.to([...labelEls, graph.querySelector('.tag')], { opacity: 0, duration: 0.35, stagger: 0.01 }, C0);
+    tl.to(q('path.ink'), { strokeDashoffset: -1.02, autoRound: false, duration: 0.8, ease: 'power2.in', stagger: 0.02 }, C0 + 0.1);
+    tl.to(q('path.ghost'), { opacity: 0, duration: 0.5 }, C0);
+    [...dotEls, ...mdotEls].forEach((el, i) => {
+      const bb = el.getBBox();
+      const dx = cx - (bb.x + bb.width / 2);
+      const dy = cy - (bb.y + bb.height / 2);
+      tl.to(el, { x: dx, y: dy, opacity: 0, scale: 0.6, duration: 0.9, ease: 'power3.in' }, C0 + 0.1 + i * 0.015);
+    });
 
-    tl.to(nodeEls, { x: W / 2, y: H / 2, scale: 0.3, opacity: 0, duration: 1, ease: 'power3.in', stagger: 0.025 }, 3.8);
-    tl.to(ast.querySelector('svg'), { opacity: 0, duration: 0.6 }, 3.8);
-    tl.fromTo(chip, { autoAlpha: 0, scale: 0.6 }, { autoAlpha: 1, scale: 1, duration: 0.6, ease: 'power3.out' }, 4.6);
-    tl.to(chip, { autoAlpha: 0, y: H / 2 - 60, duration: 0.4 }, 5.3);
-
-    tl.fromTo(logEl, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.6, ease: 'power3.out' }, 5.7);
-    tl.fromTo(
-      logEl.querySelectorAll('.ll'),
-      { opacity: 0, x: -10 },
-      { opacity: 1, x: 0, duration: 0.25, stagger: 0.2, ease: 'none' },
-      5.9,
-    );
-    tl.fromTo(logEl.querySelector('.bar i'), { scaleX: 0 }, { scaleX: 1, duration: 2.1, ease: 'none' }, 5.9);
-    tl.to(logEl, { autoAlpha: 0, y: -40, filter: 'blur(8px)', duration: 0.8 }, 8.2);
-
-    // pinned at 100svh with overflow hidden: shrink the intro on short phones rather than clip it
+    const avatar = out.querySelector('.avatar');
     const inner = out.querySelector('.out-inner');
-    const room = H - 96;
-    gsap.set(inner, { scale: Math.min(1, room / inner.offsetHeight), transformOrigin: '0% 50%' });
+    // pinned at 100svh with overflow hidden: shrink the intro on short phones rather than clip it
+    const cs = getComputedStyle(out);
+    const room = out.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    // an overflowing grid track starts at the top padding edge, so scale from there
+    gsap.set(inner, { scale: Math.min(1, room / inner.offsetHeight), transformOrigin: '0% 0%' });
+    const ar = avatar.getBoundingClientRect();
+    const aw = ar.width;
+    const dot = 28;
+    gsap.set(head, { width: aw, height: aw, xPercent: -50, yPercent: -50, x: cx, y: cy, scale: 0, autoAlpha: 0 });
+    gsap.set(refEl, { xPercent: -50, x: cx, y: cy });
 
-    tl.set(out, { autoAlpha: 1 }, 8.5);
-    tl.fromTo(out.querySelector('.avatar'), { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out' }, 8.5);
-    tl.fromTo(out.querySelectorAll('.ch'), { yPercent: 110 }, { yPercent: 0, duration: 0.7, stagger: 0.03, ease: 'power3.out' }, 8.6);
+    const H0 = C0 + 1.05;
+    tl.to(head, { autoAlpha: 1, scale: dot / aw, duration: 0.4, ease: 'back.out(2.5)' }, H0);
+    tl.fromTo(graph.querySelector('.burst'), { opacity: 0.8, attr: { r: 10 } }, { opacity: 0, attr: { r: Math.min(W, H) * 0.35 }, duration: 0.9, ease: 'power2.out', immediateRender: false }, H0);
+    tl.fromTo(refEl, { autoAlpha: 0, y: cy + 8 }, { autoAlpha: 1, y: cy, duration: 0.4, ease: 'power3.out' }, H0 + 0.25);
+    tl.fromTo(refEl.querySelectorAll('.r2'), { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.2 }, H0 + 0.45);
+
+    // 4 · HEAD expands into the intro
+    const E0 = H0 + 1.6;
+    tl.to(refEl, { autoAlpha: 0, y: cy + 12, duration: 0.35 }, E0);
+    tl.set(out, { autoAlpha: 1 }, E0);
+    gsap.set(avatar, { opacity: 0 });
+    tl.to(
+      head,
+      { x: ar.left - sr.left + aw / 2, y: ar.top - sr.top + aw / 2, scale: 1, duration: 1, ease: 'power3.inOut' },
+      E0,
+    );
+    tl.to(head, { '--glow': 0, duration: 0.7 }, E0 + 0.1);
+    tl.to(head.querySelector('img'), { opacity: 1, duration: 0.5 }, E0 + 0.45);
+    tl.set(avatar, { opacity: 1 }, E0 + 1);
+    tl.set(head, { autoAlpha: 0 }, E0 + 1);
+    tl.fromTo(out.querySelectorAll('.ch'), { yPercent: 110 }, { yPercent: 0, duration: 0.7, stagger: 0.03, ease: 'power3.out' }, E0 + 0.6);
     tl.fromTo(
       out.querySelectorAll('.rise'),
       { opacity: 0, y: 24, filter: 'blur(6px)' },
       { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, stagger: 0.12, ease: 'power3.out' },
-      9.1,
+      E0 + 1,
     );
-    tl.to({}, { duration: 1 }, 10);
+    tl.to({}, { duration: 1 }, E0 + 1.9);
   }
 
   onMount(() => scene(build));
@@ -210,38 +264,65 @@ export default saurav.run();`;
 
 <section class="hero" bind:this={root} aria-label="Introduction">
   <div class="stage" bind:this={stage}>
-    <div class="editor" bind:this={editor}>
-      <div class="tabs">
-        <span class="tab">saurav.ts</span>
-        <span class="crumbs">src / people / saurav.ts</span>
-      </div>
-      <div class="pane"><Code lines={code} label="saurav.ts, source" /></div>
-      <div class="status">
-        <span>TypeScript</span><span class="sep">UTF-8</span>
-        <span class="hint">Scroll to compile</span>
-      </div>
-    </div>
-
-    <div class="ast" bind:this={ast} aria-hidden="true">
+    <div class="graph" class:vert={view.vert} bind:this={graph} aria-hidden="true">
       <svg width={view.w} height={view.h} viewBox="0 0 {view.w || 1} {view.h || 1}">
-        {#each view.paths as d}<path {d} pathLength="1" />{/each}
+        {#each view.paths as p}<path class="ghost" d={p.d} />{/each}
+        {#each view.paths as p}
+          <path class="ink {p.kind}" data-b={p.b} data-kind={p.kind} d={p.d} pathLength="1" style:--c={B[p.b].color} />
+        {/each}
+        {#each view.mdots as m}<circle class="ring" cx={m.x} cy={m.y} r="5" style:--c={B[m.b].color} />{/each}
+        <circle class="burst" cx={view.w / 2} cy={view.h / 2} r="10" opacity="0" />
+        {#each view.dots as d}
+          <circle class="dot" class:root={d.b === 'main'} data-b={d.b} cx={d.x} cy={d.y} r="5.5" style:--c={B[d.b].color} />
+        {/each}
+        {#each view.mdots as m}<circle class="mdot" cx={m.x} cy={m.y} r="5.5" />{/each}
       </svg>
-      {#each nodes as n}
-        <div class="node" data-id={n.id}>
-          <span class="kind">{n.kind}</span>
-          <span class="txt">{n.text}</span>
+
+      {#if view.tag}
+        <span class="tag" style:left="{view.tag.x}px" style:top="{view.tag.y}px">main</span>
+      {/if}
+
+      {#each view.labels as l}
+        <div
+          class="lb {l.side}"
+          class:merge={l.merge}
+          data-b={l.b}
+          style:left="{l.x}px"
+          style:top="{l.y}px"
+          style:--c={B[l.b].color}
+          style:max-width={view.vert ? `${view.w - l.x - 12}px` : l.max && `${l.max}px`}
+        >
+          <div class="lt">
+          {#if l.merge}
+            Merge branch '<span class="m">{B[l.b].name}</span>'
+          {:else if view.vert}
+            <span class="h">{l.hash}</span> <span class="m">{l.msg}</span>
+          {:else}
+            <span class="h">{l.hash}{#if l.tip}&nbsp;<span class="ref">({B[l.b].name})</span>{/if}</span>
+            <span class="m">{l.msg}</span>
+          {/if}
+          </div>
         </div>
       {/each}
-      <div class="chip">saurav.js <span>1 module · 0 errors</span></div>
     </div>
 
-    <div class="log" bind:this={logEl} aria-hidden="true">
-      <div class="log-head"><span>build</span><span class="bar"><i></i></span></div>
-      {#each log as [k, text]}
-        <div class="ll {k}">
-          {#if k === 'ok'}<b>✓</b>{:else if k === 'done'}<b>→</b>{/if}{text}
+    <div class="con" bind:this={con} aria-hidden="true">
+      <div class="cl">
+        <span><b>$</b> git log --graph --all</span><span class="hint">scroll to merge</span>
+      </div>
+      {#each merges as m}
+        <div class="cl">
+          <span><b>$</b> git merge <i style:color={B[m.b].color}>{B[m.b].name}</i></span>
+          <span class="ok">Merge made by the 'ort' strategy.</span>
         </div>
       {/each}
+    </div>
+
+    <div class="head" bind:this={head} aria-hidden="true"><img src="/avatar.svg" alt="" /></div>
+    <div class="ref" bind:this={refEl} aria-hidden="true">
+      <p class="r1"><span class="hh">{headHash}</span> (<b>HEAD</b> → <i>main</i>)</p>
+      <p class="r2 dim">Updating {merges[0].hash}..{headHash}</p>
+      <p class="r2">Fast-forward · <em>{files} files changed</em></p>
     </div>
 
     <div class="out" bind:this={out}>
@@ -278,116 +359,123 @@ export default saurav.run();`;
     position: relative;
     height: 100svh;
     overflow: hidden;
-    display: grid;
-    place-items: center;
-    padding: 72px 16px 24px;
   }
 
-  .editor {
-    width: min(100%, 860px);
-    max-height: 100%;
+  .graph { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
+  .graph svg { position: absolute; inset: 0; overflow: visible; }
+  path { fill: none; stroke-linejoin: round; }
+  .ghost { stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 2 5; }
+  .ink { stroke: var(--c); stroke-width: 2.5; }
+  .ink.main { stroke-width: 3; }
+  .dot { fill: var(--c); stroke: var(--bg); stroke-width: 3; }
+  .mdot { fill: var(--bg); stroke: var(--accent); stroke-width: 2.5; }
+  .ring { fill: none; stroke: var(--c); stroke-width: 2; }
+  .burst { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+
+  .tag {
+    position: absolute;
+    translate: calc(-100% - 14px) -50%;
+    font: 600 0.75rem/1 var(--mono);
+    color: var(--accent);
+  }
+  .vert .tag { translate: -6px calc(-100% - 12px); }
+
+  .lb { position: absolute; }
+  .lt {
+    font: 400 0.8125rem/1.35 var(--mono);
+    color: var(--text);
+    white-space: nowrap;
     display: flex;
     flex-direction: column;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+  .lb.above { translate: -6px calc(-100% - 10px); }
+  .lb.below { translate: -6px 10px; }
+  .lb .h { font-size: 0.6875rem; color: var(--faint); }
+  .lb .ref { color: var(--c); }
+  .lb .m { color: var(--text); white-space: normal; }
+  .lb.mid { translate: 0 -50%; }
+  .lb.mid .lt {
+    display: block;
     overflow: hidden;
-    --code-size: clamp(0.6875rem, 0.55rem + 0.55vw, 0.875rem);
+    text-overflow: ellipsis;
+    font-size: 0.75rem;
   }
-  .tabs, .status {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    font: 500 0.75rem/1 var(--mono);
-    color: var(--muted);
-  }
-  .tabs { border-bottom: 1px solid var(--line); }
-  .tab {
-    padding: 12px 18px;
-    color: var(--text);
-    background: var(--bg-2);
-    border-right: 1px solid var(--line);
-    box-shadow: inset 0 -2px 0 var(--accent);
-  }
-  .crumbs { color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pane { padding: 18px 20px 18px 8px; overflow: hidden; }
-  .status { border-top: 1px solid var(--line); padding: 9px 18px; font-size: 0.6875rem; }
-  .status .hint { margin-left: auto; color: var(--accent); }
+  .lb.mid .m { color: var(--c); white-space: nowrap; }
+  .lb.merge { color: var(--faint); }
 
-  .ast { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
-  .ast svg { position: absolute; inset: 0; overflow: visible; }
-  .ast path { fill: none; stroke: var(--line-2); stroke-width: 1.25; }
-  .node {
-    --box: 1;
-    position: absolute;
-    left: 0;
-    top: 0;
-    font: 500 var(--code-size, 0.8125rem) / 1.5 var(--mono);
-    --code-size: clamp(0.6875rem, 0.55rem + 0.55vw, 0.875rem);
-    color: #f4c28c;
-    white-space: nowrap;
-    padding: 5px 10px;
-    border-radius: 8px;
-    background: rgb(36 30 24 / calc(var(--box) * 1));
-    border: 1px solid rgb(233 168 102 / calc(var(--box) * 0.35));
-    box-shadow: 0 10px 24px -12px rgb(0 0 0 / calc(var(--box) * 0.8));
-  }
-  .node[data-id='prog'], .node[data-id='obj'] { color: var(--text); }
-  .kind {
+  .con {
     position: absolute;
     left: 50%;
-    bottom: calc(100% + 4px);
-    transform: translateX(-50%);
-    font: 500 0.625rem/1 var(--sans);
-    letter-spacing: 0.02em;
-    color: var(--muted);
+    bottom: 28px;
+    translate: -50% 0;
+    width: min(calc(100% - 32px), 620px);
+    height: 42px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 20px 60px -24px rgba(0, 0, 0, 0.7);
+    font: 400 0.8125rem/1 var(--mono);
+    color: var(--text);
+    overflow: hidden;
+    visibility: hidden;
   }
-  .chip {
+  .cl {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 16px;
+    white-space: nowrap;
+  }
+  .cl b { color: var(--syn-fn); font-weight: 500; margin-right: 4px; }
+  .cl i { font-style: normal; }
+  .cl .ok { color: var(--syn-str); overflow: hidden; text-overflow: ellipsis; }
+  .cl .hint { color: var(--accent); }
+  .cl .hint::after { content: ' ↓'; }
+
+  .head {
+    --glow: 1;
     position: absolute;
     left: 0;
     top: 0;
-    font: 600 clamp(1.25rem, 3vw, 1.75rem)/1 var(--mono);
-    color: var(--text);
-    padding: 18px 26px;
-    border-radius: 14px;
-    background: var(--panel);
-    border: 1px solid var(--line-2);
-    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
-    white-space: nowrap;
-    display: flex;
-    gap: 14px;
-    align-items: baseline;
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: var(--accent);
+    visibility: hidden;
+    box-shadow: 0 0 0 calc(var(--glow) * 30px) rgb(233 168 102 / 0.2);
   }
-  .chip span { font: 400 0.75rem/1 var(--mono); color: var(--syn-str); }
-
-  .log {
+  .head::before {
+    content: '';
     position: absolute;
-    width: min(calc(100% - 32px), 640px);
-    font: 400 clamp(0.75rem, 0.65rem + 0.4vw, 0.9375rem)/1.9 var(--mono);
+    inset: -320%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(233 168 102 / 0.45), rgb(233 168 102 / 0.12) 45%, transparent);
+    opacity: var(--glow);
+    pointer-events: none;
+  }
+  .head img { position: relative; width: 100%; height: 100%; display: block; border-radius: 50%; opacity: 0; }
+
+  .ref {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding-top: 34px;
+    text-align: center;
+    font: 400 0.875rem/1.7 var(--mono);
     color: var(--text);
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 18px 22px 22px;
-    box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    visibility: hidden;
   }
-  .log-head {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    color: var(--muted);
-    font-size: 0.75rem;
-    margin-bottom: 10px;
-  }
-  .bar { flex: 1; height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; }
-  .bar i { display: block; height: 100%; background: var(--accent); transform-origin: left; }
-  .ll { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ll b { font-weight: 500; display: inline-block; width: 2ch; }
-  .ll.ok b { color: var(--syn-str); }
-  .ll.cmd { color: var(--syn-fn); }
-  .ll.dim { color: var(--muted); padding-left: 2ch; }
-  .ll.done { color: var(--accent); margin-top: 6px; }
+  .ref p { margin: 0; }
+  .ref .r1 { font-size: 1rem; margin-bottom: 10px; color: var(--muted); }
+  .ref .hh { color: var(--syn-fn); margin-right: 4px; }
+  .ref b { color: var(--syn-key); font-weight: 600; }
+  .ref i { color: var(--accent); font-style: normal; font-weight: 600; }
+  .ref .dim { color: var(--faint); font-size: 0.75rem; }
+  .ref em { color: var(--syn-str); font-style: normal; }
 
   .out {
     position: absolute;
@@ -465,18 +553,19 @@ export default saurav.run();`;
     .stack { margin-top: 14px; }
   }
 
-  :global(.rm) .stage { height: auto; display: block; padding-top: 88px; }
-  :global(.rm) .editor { margin: 0 auto; }
-  :global(.rm) .ast, :global(.rm) .log { display: none; }
-  :global(.rm) .out { position: static; padding: 72px 0 24px; }
+  :global(.rm) .stage { height: auto; padding-top: 16px; }
+  :global(.rm) .graph, :global(.rm) .con, :global(.rm) .head, :global(.rm) .ref { display: none; }
+  :global(.rm) .out { position: static; padding: 72px 16px 24px; }
 
   @media (max-width: 640px) {
-    .stage { padding: 64px 12px 16px; }
-    .pane { padding: 14px 12px 14px 2px; }
     .avatar { width: 72px; height: 72px; margin-bottom: 22px; }
-    .ll { white-space: normal; padding-left: 2ch; text-indent: -2ch; line-height: 1.6; margin-bottom: 4px; }
-    .ll.dim { padding-left: 2ch; text-indent: 0; }
     .stack { margin-top: 28px; }
     .out { padding: 64px 16px 16px; }
+    .lb.mid .lt { font-size: 0.6875rem; }
+    .con { bottom: 14px; height: 36px; font-size: 0.6875rem; }
+    .cl { padding: 0 12px; }
+    .cl .ok { display: none; }
+    .ref { font-size: 0.75rem; }
+    .ref .r1 { font-size: 0.875rem; }
   }
 </style>
