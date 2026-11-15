@@ -318,7 +318,7 @@
       {/each}
     </div>
 
-    <div class="head" bind:this={head} aria-hidden="true"><img src="/avatar.svg" alt="" /></div>
+    <div class="head" bind:this={head} aria-hidden="true"><img src="/avatar.webp" alt="" /></div>
     <div class="ref" bind:this={refEl} aria-hidden="true">
       <p class="r1"><span class="hh">{headHash}</span> (<b>HEAD</b> → <i>main</i>)</p>
       <p class="r2 dim">Updating {merges[0].hash}..{headHash}</p>
@@ -328,7 +328,7 @@
     <div class="out" bind:this={out}>
       <div class="out-inner">
         <div class="intro">
-        <img class="avatar" src="/avatar.svg" alt="Portrait of {c.name}" width="88" height="88" />
+        <img class="avatar" src="/avatar.webp" alt="Portrait of {c.name}" width="88" height="88" />
         <h1 class="name" aria-label={c.name}>
           {#each words as w}
             <span class="line" aria-hidden="true">{#each w as ch}<span class="ch">{ch}</span>{/each}</span>
