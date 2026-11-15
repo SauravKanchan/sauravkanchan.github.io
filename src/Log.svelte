@@ -17,9 +17,12 @@
 
   const L = 14;
   const cmd = 'git log --graph --oneline career';
+  const BRANCH = ['var(--accent)', 'var(--syn-key)', 'var(--syn-type)', 'var(--syn-num)'];
 
   let section, list;
-  let g = $state({ h: 0, dots: [], paths: [] });
+  let g = $state({ h: 0, ys: [], end: 0, branches: [] });
+  // main runs past the root commit to the section edge, where the hackathons line picks it up
+  const main = $derived(g.ys.length ? `M${L} ${g.ys[0]}V${g.end}` : '');
 
   function measure() {
     const lr = list.getBoundingClientRect();
@@ -27,39 +30,40 @@
       const r = el.getBoundingClientRect();
       return r.top - lr.top + Math.min(r.height, 22) / 2;
     });
-    const paths = [{ d: `M${L} ${ys[0]}V${ys.at(-1)}`, from: ys[0], to: ys.at(-1) }];
-    g = { h: lr.height, dots: ys.map((y) => ({ x: L, y })), paths };
+    const branches = ys.slice(0, -1).map((a, i) => {
+      const b = ys[i + 1];
+      const k = Math.min(28, (b - a) / 6);
+      const X = 40;
+      return { a, b, color: BRANCH[i % BRANCH.length], d: `M${L} ${a}C${L} ${a + k} ${X} ${a + k} ${X} ${a + 2 * k}V${b - 2 * k}C${X} ${b - k} ${L} ${b - k} ${L} ${b}` };
+    });
+    const end = section.getBoundingClientRect().bottom - lr.top;
+    g = { h: lr.height, ys, end, branches };
     return g;
   }
 
   function build() {
-    const { paths, dots } = measure();
+    const { ys, end, branches } = measure();
     flushSync();
     const line = '58%';
-    const pathEls = list.querySelectorAll('path');
-    paths.forEach((p, i) => {
+    const y0 = ys[0];
+    const at = (y) => `top+=${y} ${line}`;
+    const pop = (el, y) =>
       gsap.fromTo(
-        pathEls[i],
+        el,
+        { attr: { r: 0 } },
+        { attr: { r: +el.getAttribute('r') }, ease: 'back.out(3)', scrollTrigger: { trigger: list, start: at(y - 10), end: at(y + 6), scrub: 0.3 } },
+      );
+
+    const draw = (el, a, b) =>
+      gsap.fromTo(
+        el,
         { strokeDasharray: 1, strokeDashoffset: 1 },
-        {
-          strokeDashoffset: 0,
-          ease: 'none',
-          scrollTrigger: { trigger: list, start: `top+=${p.from} ${line}`, end: `top+=${p.to} ${line}`, scrub: 0.4 },
-        },
+        { strokeDashoffset: 0, autoRound: false, ease: 'none', scrollTrigger: { trigger: list, start: at(a), end: at(b), scrub: 0.4 } },
       );
-    });
-    list.querySelectorAll('circle').forEach((dot, i) => {
-      gsap.fromTo(
-        dot,
-        { scale: 0 },
-        {
-          scale: 1,
-          transformOrigin: '50% 50%',
-          ease: 'back.out(3)',
-          scrollTrigger: { trigger: list, start: `top+=${dots[i].y - 10} ${line}`, end: `top+=${dots[i].y + 6} ${line}`, scrub: 0.3 },
-        },
-      );
-    });
+    draw(list.querySelector('.prog'), y0, end);
+    list.querySelectorAll('.br').forEach((el, i) => draw(el, branches[i].a, branches[i].b));
+    list.querySelectorAll('.dot').forEach((el, i) => pop(el, ys[i]));
+
     list.querySelectorAll('.row').forEach((row) => {
       gsap.fromTo(
         row.querySelector('.head-text'),
@@ -119,9 +123,10 @@
 
   <ol class="wrap list" bind:this={list}>
     <svg class="graph" width="56" height={g.h} aria-hidden="true">
-      {#each g.paths as p}<path d={p.d} pathLength="1" />{/each}
-      {#each g.dots as d, i}
-        <circle cx={d.x} cy={d.y} r={rows[i].merge ? 3.5 : 5} class:hollow={rows[i].merge} />
+      <path class="prog" d={main} pathLength="1" />
+      {#each g.branches as b}<path class="br" d={b.d} pathLength="1" style:stroke={b.color} />{/each}
+      {#each g.ys as y, i}
+        <circle class="dot" cx={L} cy={y} r={rows[i].merge ? 3.5 : 5.5} class:hollow={rows[i].merge} style:fill={rows[i].merge ? null : BRANCH[i % BRANCH.length]} />
       {/each}
     </svg>
 
@@ -137,7 +142,7 @@
         {#if r.role}
           <div class="body">
             <h3>{r.role.role}</h3>
-            <p class="meta">{r.role.company} <span>{r.role.date}</span></p>
+            <p class="meta"><b style:color={BRANCH[rows.indexOf(r) % BRANCH.length]}>{r.role.company}</b> <span>{r.role.date}</span></p>
             <ul class="diff">
               {#each r.role.bullets as b}<li>{b}</li>{/each}
             </ul>
@@ -163,8 +168,12 @@
   .list { position: relative; list-style: none; padding: 0; margin-top: clamp(48px, 8vh, 88px); }
   .graph { position: absolute; left: 0; top: 0; overflow: visible; }
   .graph path { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; }
-  .graph circle { fill: var(--accent); stroke: var(--bg); stroke-width: 3; }
-  .graph circle.hollow { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
+  .graph .dot { fill: var(--accent); stroke: var(--bg); stroke-width: 3; }
+  .graph .dot.hollow { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
+
+  .graph .prog { stroke: var(--line-2); }
+  .graph .br { stroke-width: 2.5; }
+  .graph .dot { stroke-width: 3.5; }
 
   .row { padding: 0 0 clamp(36px, 6vh, 64px) 64px; }
   .row.minor { padding-bottom: 28px; }
@@ -188,6 +197,7 @@
     letter-spacing: -0.025em;
   }
   .meta { margin: 8px 0 0; font: 500 1.0625rem/1.4 var(--sans); color: var(--text); }
+  .meta b { font-weight: inherit; }
   .meta span { margin-left: 10px; font: 400 0.8125rem/1 var(--mono); color: var(--muted); }
   .diff { list-style: none; padding: 0; margin: 20px 0 0; max-width: 62ch; }
   .diff li {

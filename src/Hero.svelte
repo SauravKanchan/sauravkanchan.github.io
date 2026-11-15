@@ -170,7 +170,7 @@ export default saurav.run();`;
     });
 
     tl.to(editor, { autoAlpha: 0, filter: 'blur(8px)', scale: 0.97, duration: 1.1 }, 1.5);
-    tl.to(paths, { strokeDashoffset: 0, duration: 0.8, stagger: 0.05 }, 2.2);
+    tl.to(paths, { strokeDashoffset: 0, autoRound: false, duration: 0.8, stagger: 0.05 }, 2.2);
     tl.to(kinds, { opacity: 1, duration: 0.5, stagger: 0.03 }, 2.4);
 
     tl.to(nodeEls, { x: W / 2, y: H / 2, scale: 0.3, opacity: 0, duration: 1, ease: 'power3.in', stagger: 0.025 }, 3.8);

@@ -46,8 +46,8 @@
     section.querySelectorAll('.talk').forEach((row) => {
       gsap
         .timeline({ scrollTrigger: { trigger: row, start: 'top 86%', end: 'top 60%', scrub: 0.5 } })
-        .fromTo(row.querySelector('.ring'), { strokeDashoffset: 1 }, { strokeDashoffset: 0, ease: 'none' }, 0)
-        .fromTo(row.querySelector('.tick'), { strokeDashoffset: 1 }, { strokeDashoffset: 0, ease: 'none' }, 0.6)
+        .fromTo(row.querySelector('.ring'), { strokeDashoffset: 1 }, { strokeDashoffset: 0, autoRound: false, ease: 'none' }, 0)
+        .fromTo(row.querySelector('.tick'), { strokeDashoffset: 1 }, { strokeDashoffset: 0, autoRound: false, ease: 'none' }, 0.6)
         .fromTo(row.querySelector('.ttl'), { opacity: 0.3, x: -8 }, { opacity: 1, x: 0 }, 0.2);
     });
     const sum = section.querySelector('.summary');
