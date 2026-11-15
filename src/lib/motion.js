@@ -8,6 +8,20 @@ export const reduce =
 
 export { gsap, ScrollTrigger };
 
+// Viewport height, re-read only when the width changes. Mobile browsers grow and shrink the viewport
+// as their toolbars hide (Brave's bottom bar even changes svh), and re-laying out the pinned scenes
+// mid-scroll moves the scroll position, which toggles the toolbars again.
+export let vh = 0;
+export function setVh() {
+  vh = innerHeight;
+  const r = document.documentElement;
+  r.style.setProperty('--vh', vh + 'px');
+  r.style.setProperty('--vu', vh / 100 + 'px');
+  r.classList.toggle('short', vh <= 760);
+  r.classList.toggle('tiny', vh <= 600);
+}
+if (typeof window !== 'undefined') setVh();
+
 // Scenes are built in mount (= document) order so pin spacing stacks correctly,
 // and all of them are rebuilt from a clean layout when the width changes.
 const scenes = [];

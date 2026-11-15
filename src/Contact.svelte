@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import c from './content.json';
   import Icon from './lib/Icon.svelte';
-  import { gsap, scene } from './lib/motion.js';
+  import { gsap, scene, vh } from './lib/motion.js';
   import { ui } from './lib/ui.svelte.js';
 
   const s = c.socials;
@@ -24,13 +24,13 @@
     const typed = section.querySelector('.typed');
     const cursor = section.querySelector('.prompt .cursor');
     // short screens can't hold the whole panel while pinned, so play it as the section scrolls past instead
-    const fits = section.querySelector('.wrap').offsetHeight + 120 < innerHeight;
+    const fits = section.querySelector('.wrap').offsetHeight + 120 < vh;
     gsap
       .timeline({
         scrollTrigger: {
           trigger: section,
           start: fits ? 'top top' : 'top 75%',
-          end: () => (fits ? '+=' + innerHeight * 1.5 : 'top 5%'),
+          end: () => (fits ? '+=' + vh * 1.5 : 'top 5%'),
           pin: fits,
           scrub: 0.5,
           onToggle: (st) => st.isActive && (ui.stage = 'shell'),
@@ -86,7 +86,7 @@
 </footer>
 
 <style>
-  .contact { min-height: 100svh; display: grid; align-items: center; padding: 88px 0 48px; }
+  .contact { min-height: var(--vh, 100svh); display: grid; align-items: center; padding: 88px 0 48px; }
   .wrap { width: min(calc(100% - 32px), 960px); margin: 0 auto; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .prompt {

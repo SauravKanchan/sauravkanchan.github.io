@@ -8,7 +8,7 @@
   import Research from './Research.svelte';
   import Modules from './Modules.svelte';
   import Contact from './Contact.svelte';
-  import { gsap, ScrollTrigger, reduce, rebuildAll } from './lib/motion.js';
+  import { gsap, ScrollTrigger, reduce, rebuildAll, setVh } from './lib/motion.js';
   import { ui, STAGES } from './lib/ui.svelte.js';
   import { loadStats } from './lib/stats.svelte.js';
 
@@ -19,7 +19,8 @@
     loadStats().catch((e) => console.warn('live stats failed', e));
     if (reduce) {
       document.documentElement.classList.add('rm');
-      return;
+      addEventListener('resize', setVh);
+      return () => removeEventListener('resize', setVh);
     }
     const lenis = new Lenis({ lerp: 0.1 });
     lenis.on('scroll', ScrollTrigger.update);
@@ -38,6 +39,7 @@
     const onResize = () => {
       if (innerWidth === w) return;
       w = innerWidth;
+      setVh();
       clearTimeout(t);
       t = setTimeout(rebuildAll, 200);
     };

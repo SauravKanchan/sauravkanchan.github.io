@@ -4,7 +4,7 @@
   import Code from './lib/Code.svelte';
   import Icon from './lib/Icon.svelte';
   import { lines } from './lib/code.js';
-  import { gsap, scene } from './lib/motion.js';
+  import { gsap, scene, vh } from './lib/motion.js';
   import { ui } from './lib/ui.svelte.js';
 
   const { papers, certifications } = c.achievements;
@@ -28,7 +28,7 @@ ${certifications.map((x) => `  ${q(x)},`).join('\n')}
       scrollTrigger: {
         trigger: section,
         start: 'top top',
-        end: () => '+=' + innerHeight * 1.4,
+        end: () => '+=' + vh * 1.4,
         pin: true,
         scrub: 0.5,
         onToggle: (s) => s.isActive && (ui.stage = 'papers'),
@@ -68,7 +68,7 @@ ${certifications.map((x) => `  ${q(x)},`).join('\n')}
 
 <style>
   .research {
-    min-height: 100svh;
+    min-height: var(--vh, 100svh);
     display: grid;
     align-items: center;
     padding: 88px 0 48px;

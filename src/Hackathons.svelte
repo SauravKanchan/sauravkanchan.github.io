@@ -145,7 +145,7 @@
 </section>
 
 <style>
-  .hacks { padding: clamp(64px, 10vh, 120px) 0; }
+  .hacks { padding: clamp(64px, calc(10 * var(--vu, 1vh)), 120px) 0; }
   .wrap { position: relative; width: min(calc(100% - 32px), 960px); margin: 0 auto; padding-left: 64px; }
 
   .graph { position: absolute; left: 0; top: 0; overflow: visible; }
@@ -167,7 +167,7 @@
   .ps { color: var(--syn-key); }
   .typed { display: inline-block; }
   .group {
-    margin: clamp(40px, 6vh, 64px) 0 4px;
+    margin: clamp(40px, calc(6 * var(--vu, 1vh)), 64px) 0 4px;
     font: 400 0.75rem/1 var(--mono);
     color: var(--syn-type);
     text-transform: uppercase;

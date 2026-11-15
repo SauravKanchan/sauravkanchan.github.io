@@ -208,7 +208,7 @@
 </section>
 
 <style>
-  .packages { padding: clamp(96px, 16vh, 180px) 0 clamp(64px, 10vh, 120px); }
+  .packages { padding: clamp(96px, calc(16 * var(--vu, 1vh)), 180px) 0 clamp(64px, calc(10 * var(--vu, 1vh)), 120px); }
   .wrap { width: min(calc(100% - 32px), 1120px); margin: 0 auto; }
   h2 { margin: 0; font: 600 clamp(2.25rem, 6vw, 4rem)/1.02 var(--sans); letter-spacing: -0.035em; }
   .prompt { margin: 18px 0 0; font: 400 clamp(0.8125rem, 0.75rem + 0.3vw, 1rem)/1.6 var(--mono); }
@@ -217,11 +217,11 @@
 
   .graph {
     position: relative;
-    margin-top: clamp(40px, 7vh, 72px);
+    margin-top: clamp(40px, calc(7 * var(--vu, 1vh)), 72px);
     display: grid;
     grid-template-columns: minmax(0, 1fr) clamp(200px, 24vw, 300px) minmax(0, 1fr);
     grid-template-areas: 'c0 root c1' 'c2 root c3';
-    row-gap: clamp(56px, 9vh, 96px);
+    row-gap: clamp(56px, calc(9 * var(--vu, 1vh)), 96px);
   }
   .c0 { grid-area: c0; }
   .c1 { grid-area: c1; }

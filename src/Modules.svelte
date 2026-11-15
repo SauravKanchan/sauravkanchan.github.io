@@ -109,14 +109,14 @@
 </section>
 
 <style>
-  .modules { padding: clamp(96px, 16vh, 180px) 0 clamp(64px, 10vh, 120px); }
+  .modules { padding: clamp(96px, calc(16 * var(--vu, 1vh)), 180px) 0 clamp(64px, calc(10 * var(--vu, 1vh)), 120px); }
   .wrap { width: min(calc(100% - 32px), 960px); margin: 0 auto; }
   h2 { margin: 0; font: 600 clamp(2.25rem, 6vw, 4rem)/1.02 var(--sans); letter-spacing: -0.035em; }
   .group {
     display: flex;
     align-items: baseline;
     gap: 14px;
-    margin: clamp(48px, 8vh, 80px) 0 8px;
+    margin: clamp(48px, calc(8 * var(--vu, 1vh)), 80px) 0 8px;
     font: 600 1.25rem/1.2 var(--sans);
     letter-spacing: -0.01em;
   }

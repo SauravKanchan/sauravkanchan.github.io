@@ -203,24 +203,25 @@
     .strip :global(.push) { display: none; }
   }
 
-  @media (max-width: 860px) and (max-height: 760px) {
-    .out-inner { --av: 108px; }
-    .portrait { padding: 10px; margin-bottom: 22px; }
-    .badge { margin-bottom: 10px; }
-    .name { font-size: clamp(2.25rem, 12vw, 2.75rem); }
-    .tagline { margin-top: 12px; font-size: 1rem; }
-    .actions { margin-top: 20px; }
-    .socials { margin-top: 10px; gap: 0 18px; }
-    .stack { margin-top: 10px; }
-    .strip { display: none; }
+  @media (max-width: 860px) {
+    /* .short/.tiny come from the fixed viewport height in motion.js, so toolbar hide/show can't toggle them */
+    :global(html.short) .out-inner { --av: 108px; }
+    :global(html.short) .portrait { padding: 10px; margin-bottom: 22px; }
+    :global(html.short) .badge { margin-bottom: 10px; }
+    :global(html.short) .name { font-size: clamp(2.25rem, 12vw, 2.75rem); }
+    :global(html.short) .tagline { margin-top: 12px; font-size: 1rem; }
+    :global(html.short) .actions { margin-top: 20px; }
+    :global(html.short) .socials { margin-top: 10px; gap: 0 18px; }
+    :global(html.short) .stack { margin-top: 10px; }
+    :global(html.short) .strip { display: none; }
   }
 
-  @media (max-width: 860px) and (max-height: 600px) {
-    .out-inner { --av: 72px; }
-    .portrait { padding: 8px; margin-bottom: 14px; }
-    .name { font-size: 2.25rem; }
-    .tagline { font-size: 0.9375rem; }
-    .actions { margin-top: 16px; }
+  @media (max-width: 860px) {
+    :global(html.tiny) .out-inner { --av: 72px; }
+    :global(html.tiny) .portrait { padding: 8px; margin-bottom: 14px; }
+    :global(html.tiny) .name { font-size: 2.25rem; }
+    :global(html.tiny) .tagline { font-size: 0.9375rem; }
+    :global(html.tiny) .actions { margin-top: 16px; }
   }
 
   @media (prefers-reduced-motion: reduce) {

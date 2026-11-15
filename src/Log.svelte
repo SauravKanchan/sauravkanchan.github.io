@@ -154,7 +154,7 @@
 </section>
 
 <style>
-  .log-section { padding: clamp(96px, 16vh, 180px) 0 clamp(80px, 12vh, 140px); }
+  .log-section { padding: clamp(96px, calc(16 * var(--vu, 1vh)), 180px) 0 clamp(80px, calc(12 * var(--vu, 1vh)), 140px); }
   .wrap { width: min(calc(100% - 32px), 960px); margin: 0 auto; }
   h2 {
     margin: 0;
@@ -165,7 +165,7 @@
   .ps { color: var(--syn-key); }
   .typed { display: inline-block; }
 
-  .list { position: relative; list-style: none; padding: 0; margin-top: clamp(48px, 8vh, 88px); }
+  .list { position: relative; list-style: none; padding: 0; margin-top: clamp(48px, calc(8 * var(--vu, 1vh)), 88px); }
   .graph { position: absolute; left: 0; top: 0; overflow: visible; }
   .graph path { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; }
   .graph .dot { fill: var(--accent); stroke: var(--bg); stroke-width: 3; }
@@ -175,7 +175,7 @@
   .graph .br { stroke-width: 2.5; }
   .graph .dot { stroke-width: 3.5; }
 
-  .row { padding: 0 0 clamp(36px, 6vh, 64px) 64px; }
+  .row { padding: 0 0 clamp(36px, calc(6 * var(--vu, 1vh)), 64px) 64px; }
   .row.minor { padding-bottom: 28px; }
   .head { font: 400 0.8125rem/22px var(--mono); color: var(--text); }
   .head-text { display: block; }

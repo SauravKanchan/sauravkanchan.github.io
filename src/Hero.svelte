@@ -2,7 +2,7 @@
   import { onMount, flushSync } from 'svelte';
   import c from './content.json';
   import { hash } from './lib/code.js';
-  import { gsap, scene, reduce } from './lib/motion.js';
+  import { gsap, scene, reduce, vh } from './lib/motion.js';
   import Intro from './Intro.svelte';
   import { ui } from './lib/ui.svelte.js';
 
@@ -145,7 +145,7 @@
       scrollTrigger: {
         trigger: root,
         start: 'top top',
-        end: () => '+=' + innerHeight * 4.6,
+        end: () => '+=' + vh * 4.6,
         pin: true,
         scrub: 0.6,
         onUpdate: (s) => {
@@ -210,7 +210,7 @@
 
     const avatar = out.querySelector('.avatar');
     const inner = out.querySelector('.out-inner');
-    // pinned at 100svh with overflow hidden: shrink the intro on short phones rather than clip it
+    // pinned at the viewport height with overflow hidden: shrink the intro on short phones rather than clip it
     const cs = getComputedStyle(out);
     const room = out.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     // an overflowing grid track starts at the top padding edge, so scale from there
@@ -327,7 +327,7 @@
   .hero { position: relative; }
   .stage {
     position: relative;
-    height: 100svh;
+    height: var(--vh, 100svh);
     overflow: hidden;
   }
 
