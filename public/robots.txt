@@ -1,2 +1,6 @@
-# https://www.robotstxt.org/robotstxt.html
+# Everyone, including AI crawlers, is welcome.
 User-agent: *
+Allow: /
+
+# Plain-text summary of this site for LLMs: https://llmstxt.org
+# https://saurav.tech/llms.txt
